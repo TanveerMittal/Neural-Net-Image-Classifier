@@ -1,5 +1,4 @@
 #-*- coding: utf-8 -*-
-
 from __future__ import division, print_function, absolute_import
 import tflearn
 from tflearn.data_utils import shuffle
@@ -17,18 +16,18 @@ def cnn_architecture(input):
     network = input
 
     #Step 1: Convolution
-    network = conv_2d(network, 32, 3, activation='htan')
+    network = conv_2d(network, 32, 3, activation='tanh')
 
     #Step 2: Max pooling
     network = max_pool_2d(network, 2)
 
     #Step 3: Convolution
-    network = conv_2d(network, 64, 3, activation='htan')
+    network = conv_2d(network, 64, 3, activation='tanh')
 
     #Step 4: Convolution
-    network = conv_2d(network, 64, 3, activation='htan')
+    network = conv_2d(network, 64, 3, activation='tanh')
 
-    #Step 5: Max pooling again
+    #Step 5: Max pooling
     network = max_pool_2d(network, 2)
 
     #Step 6: Fully-connected 512 node neural network
@@ -41,16 +40,15 @@ def cnn_architecture(input):
     network = fully_connected(network, 1, activation='softmax')
 
     #Tell tflearn how we want to train the network
-    network = regression(network, optimizer='adam',
-                         loss='categorical_crossentropy',
-                         learning_rate=0.001)
+    network = regression(network, loss='categorical_crossentropy', learning_rate=0.001)
 
     return network
 
 #Load the data set
-X, Y, X_test, Y_test = pickle.load(open("full_dataset.pkl", "rb"))
+X = pickle.load(open("images.pkl", "rb"))
+Y = pickle.load(open("array.pkl", "rb"))
 
-#Shuffle the data
+#Shuffle the data to reduce possible bias in training process
 X, Y = shuffle(X, Y)
 
 img_prep = ImagePreprocessing()
@@ -73,7 +71,7 @@ cnn = cnn_architecture(input_data(shape=[None, 32, 32, 3],
 model = tflearn.DNN(cnn, tensorboard_verbose=0, checkpoint_path='shoe-classifier.tfl.ckpt')
 
 #Training
-model.fit(X, Y, n_epoch=100, shuffle=True, validation_set=(X_test, Y_test),
+model.fit(X, Y, n_epoch=100, shuffle=True,
           show_metric=True, batch_size=96,
           snapshot_epoch=True,
           run_id='shoe-classifier')
@@ -81,5 +79,3 @@ model.fit(X, Y, n_epoch=100, shuffle=True, validation_set=(X_test, Y_test),
 #Save model when training is complete to a file
 model.save("shoe-classifier.tfl")
 print("Successfully trainined")
-
-
