@@ -8,6 +8,8 @@ from tflearn.layers.estimator import regression
 from tflearn.data_preprocessing import ImagePreprocessing
 from tflearn.data_augmentation import ImageAugmentation
 import pickle
+import cv2
+import glob
 
 
 #Architecture for network based off code for cifar problem
@@ -45,8 +47,10 @@ def cnn_architecture(input):
     return network
 
 #Load the data set
-X = pickle.load(open("images.pkl", "rb"))
-Y = pickle.load(open("array.pkl", "rb"))
+X = [cv2.imread(x) for x in glob.glob("./shoes/*")] + [cv2.imread(x) for x in glob.glob("./negatives/*")]
+print("done reading images")
+Y = [0 for x in glob.glob("./shoes/*")] + [1 for x in glob.glob("./negatives/*")]
+print("done indexing outputs")
 
 #Shuffle the data to reduce possible bias in training process
 X, Y = shuffle(X, Y)
@@ -62,17 +66,16 @@ img_aug.add_random_rotation(max_angle=25.)
 img_aug.add_random_blur(sigma_max=3.)
 
 #Create cnn with defined architecture
-cnn = cnn_architecture(input_data(shape=[None, 32, 32, 3],
+cnn = cnn_architecture(input_data(shape=[None, 1280, 720, 3],
                      data_preprocessing=img_prep,
                      data_augmentation=img_aug))
-
 
 #Wrap the network in a model object
 model = tflearn.DNN(cnn, tensorboard_verbose=0, checkpoint_path='shoe-classifier.tfl.ckpt')
 
 #Training
-model.fit(X, Y, n_epoch=100, shuffle=True,
-          show_metric=True, batch_size=96,
+model.fit(X, Y, n_epoch=10, shuffle=True,
+          show_metric=True, batch_size=64,
           snapshot_epoch=True,
           run_id='shoe-classifier')
 
