@@ -11,5 +11,5 @@ success = True
 while success:
   success,image = vidcap.read()
   print('Frame%d: ', success)
-  cv2.imwrite("negatives/frame%d.jpg" % count, imutils.resize(image, width=300, height=168) )    # save frame as JPEG file
+  cv2.imwrite("train/negatives/frame%d.jpg" % count, imutils.resize(image, width=1280, height=720) )    # save frame as JPEG file
   count += 1
