@@ -5,10 +5,10 @@ from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 import numpy as np
 import os
-from tflearn.data_utils import shuffle
 from keras import metrics
 import gzip
-
+import pickle
+import random
 
 batch_size = 50
 num_classes = 1
@@ -19,27 +19,27 @@ save_dir = os.path.join(os.getcwd(), 'saved_models')
 model_name = 'shoe_classifier.h5'
 
 # The data, shuffled and split between train and test sets:
-x_train = np.load(gzip.open("pickle/train_x.npy.gz"))
+x_train = pickle.load(gzip.open("pickle/train_x.pkl.gz"))
 print("done reading images")
-y_train = np.load(gzip.open("pickle/train_y.npy.gz"))
+y_train = pickle.load(gzip.open("pickle/train_y.pkl.gz"))
 print("done indexing outputs")
 
-x_train, y_train = shuffle(x_train, y_train)
-x_train = np.array(x_train)
-y_train = np.array(y_train)
+data = list(zip(x_train, y_train))
+random.shuffle(data)
+x_train, y_train = zip(*data)
+
+
 
 
 x_test = np.load(gzip.open("pickle/test_x.npy.gz"))
 y_test = np.load(gzip.open("pickle/test_y.npy.gz"))
 
-print('x_train shape:', x_train.shape)
-print(x_train.shape[0], 'train samples')
-print(x_test.shape[0], 'test samples')
+
 
 model = Sequential()
 
 model.add(Conv2D(32, (3, 3), padding='same',
-                 input_shape=x_train.shape[1:], activation='relu'))
+                 input_shape=np.array(x_train).shape[1:], activation='relu'))
 model.add(Conv2D(32, (3, 3), activation='relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 model.add(Dropout(0.25))
@@ -70,12 +70,16 @@ model.compile(loss='binary_crossentropy',
 
 def batch_generator(x, y, batch_size=64):
     while(True):
-        batch = {}
-        for i in range(x.__len__()):
-            batch += {x[i]:y[i]}
-            if i%batch_size == 0 or i == x.__len__() - 1:
-                yield ([n for n in batch], [batch[b] for b in batch])
-                batch = {}
+        inputs = []
+        targets = []
+        for i in range(len(x)):
+            inputs.append(x[i])
+            targets.append(y[i])
+            if i%batch_size == 0 or i == len(x) - 1:
+                batch_x = np.array([a for a in inputs])
+                yield (batch_x, np.array([b for b in targets]))
+                inputs = []
+                targets = []
 
 model.fit_generator(batch_generator(x_train, y_train), steps_per_epoch=10, validation_data=(x_test, y_test), epochs=epochs)
 
