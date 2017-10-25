@@ -1,15 +1,16 @@
 from __future__ import print_function
 import keras
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation, Flatten
+from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 import numpy as np
 import os
+from tflearn.data_utils import shuffle
 from keras import metrics
-from keras.utils import to_categorical
+import gzip
 
 
-batch_size = 64
+batch_size = 50
 num_classes = 1
 epochs = 3
 data_augmentation = True
@@ -18,16 +19,18 @@ save_dir = os.path.join(os.getcwd(), 'saved_models')
 model_name = 'shoe_classifier.h5'
 
 # The data, shuffled and split between train and test sets:
-x_train = np.load("pickle/train_x.npy")
+x_train = np.load(gzip.open("pickle/train_x.npy.gz"))
 print("done reading images")
-y_train = np.load("pickle/train_y.npy")
-#y_train = to_categorical(y_train)
+y_train = np.load(gzip.open("pickle/train_y.npy.gz"))
 print("done indexing outputs")
 
+x_train, y_train = shuffle(x_train, y_train)
+x_train = np.array(x_train)
+y_train = np.array(y_train)
 
-x_test = np.load("pickle/test_x.npy")
-y_test = np.load("pickle/test_y.npy")
-#y_test = to_categorical(y_test)
+
+x_test = np.load(gzip.open("pickle/test_x.npy.gz"))
+y_test = np.load(gzip.open("pickle/test_y.npy.gz"))
 
 print('x_train shape:', x_train.shape)
 print(x_train.shape[0], 'train samples')
@@ -65,11 +68,17 @@ model.compile(loss='binary_crossentropy',
               optimizer=opt,
               metrics=['accuracy', metrics.binary_accuracy])
 
-model.fit(x_train, y_train,
-          batch_size=batch_size,
-          epochs=epochs,
-          validation_data=(x_test, y_test),
-          shuffle=True)
+def batch_generator(x, y, batch_size=64):
+    while(True):
+        batch = {}
+        for i in range(x.__len__()):
+            batch += {x[i]:y[i]}
+            if i%batch_size == 0 or i == x.__len__() - 1:
+                yield ([n for n in batch], [batch[b] for b in batch])
+                batch = {}
+
+model.fit_generator(batch_generator(x_train, y_train), steps_per_epoch=10, validation_data=(x_test, y_test), epochs=epochs)
+
 
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
@@ -82,3 +91,4 @@ print('Saved trained model at %s ' % model_path)
 scores = model.evaluate(x_test, y_test, verbose=1)
 print('Test loss:', scores[0])
 print('Test accuracyh:', scores[1])
+

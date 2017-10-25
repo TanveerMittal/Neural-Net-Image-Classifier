@@ -2,7 +2,7 @@ import glob
 import cv2
 import pickle
 from numpy import array
-
+import gzip
 train_x = [cv2.imread(x) for x in glob.glob("./train/Athletic shoes/*")] + \
             [cv2.imread(x) for x in glob.glob("./train/bare feet/*")] + \
             [cv2.imread(x) for x in glob.glob("./train/Dress shoes/*")] + \
@@ -23,7 +23,7 @@ validation_x = [cv2.imread(x) for x in glob.glob("./validate/positive/*")] + \
                 [cv2.imread(x) for x in glob.glob("./validate/negative/*")]
 validation_y = [1 for x in glob.glob("./validate/positive/*")] + [0 for x in glob.glob("./validate/negative/*")]
 
-pickle.dump(array(train_x), open("pickle/train_x.npy", "w+"))
-pickle.dump(array(train_y), open("pickle/train_y.npy", "w+"))
-pickle.dump(array(validation_x), open("pickle/test_x.npy", "w+"))
-pickle.dump(array(validation_y), open("pickle/test_y.npy", "w+"))
+pickle.dump(array(train_x), gzip.open("pickle/train_x.npy", "w+"))
+pickle.dump(array(train_y), gzip.open("pickle/train_y.npy", "w+"))
+pickle.dump(array(validation_x), gzip.open("pickle/test_x.npy", "w+"))
+pickle.dump(array(validation_y), gzip.open("pickle/test_y.npy", "w+"))
