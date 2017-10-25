@@ -23,18 +23,10 @@ x_train = pickle.load(gzip.open("pickle/train_x.pkl.gz"))
 print("done reading images")
 y_train = pickle.load(gzip.open("pickle/train_y.pkl.gz"))
 print("done indexing outputs")
-
-data = list(zip(x_train, y_train))
-random.shuffle(data)
-x_train, y_train = zip(*data)
-
-
-
+print(str(len(x_train)) + " training samples")
 
 x_test = np.load(gzip.open("pickle/test_x.npy.gz"))
 y_test = np.load(gzip.open("pickle/test_y.npy.gz"))
-
-
 
 model = Sequential()
 

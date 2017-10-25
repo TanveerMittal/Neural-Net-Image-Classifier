@@ -3,6 +3,8 @@ import cv2
 import pickle
 from numpy import array
 import gzip
+import random
+
 train_x = [cv2.imread(x) for x in glob.glob("./train/Athletic shoes/*")] + \
             [cv2.imread(x) for x in glob.glob("./train/bare feet/*")] + \
             [cv2.imread(x) for x in glob.glob("./train/Dress shoes/*")] + \
@@ -23,7 +25,17 @@ validation_x = [cv2.imread(x) for x in glob.glob("./validate/positive/*")] + \
                 [cv2.imread(x) for x in glob.glob("./validate/negative/*")]
 validation_y = [1 for x in glob.glob("./validate/positive/*")] + [0 for x in glob.glob("./validate/negative/*")]
 
-pickle.dump(array(train_x), gzip.open("pickle/train_x.npy", "w+"))
-pickle.dump(array(train_y), gzip.open("pickle/train_y.npy", "w+"))
-pickle.dump(array(validation_x), gzip.open("pickle/test_x.npy", "w+"))
-pickle.dump(array(validation_y), gzip.open("pickle/test_y.npy", "w+"))
+for i in range(len(train_x)):
+    a = random.randint(0, len(train_x) - 1)
+    b = random.randint(0, len(train_x) - 1)
+    x = train_x[a]
+    y = train_y[a]
+    train_x[a] = train_x[b]
+    train_y[a] = train_y[a]
+    train_x[b] = x
+    train_y[b] = y
+
+pickle.dump(train_x, gzip.open("pickle/train_x.pkl.gz", "w+"))
+pickle.dump(train_y, gzip.open("pickle/train_y.pkl.gz", "w+"))
+pickle.dump(array(validation_x), gzip.open("pickle/test_x.npy.gz", "w+"))
+pickle.dump(array(validation_y), gzip.open("pickle/test_y.npy.gz", "w+"))
