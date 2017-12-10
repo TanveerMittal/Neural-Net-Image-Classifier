@@ -1,4 +1,4 @@
 # shoe-cnn
-Custom Convolutional Neural Network with Binary Output designed to detect shoes/bare feet.
+Custom Convolutional Neural Network with Binary Output designed to be retrained for any binary image classification scenario. First examples were detection of shoes and basic facial recognition.
 
 Written in python with tensorflow/keras
