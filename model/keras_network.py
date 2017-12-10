@@ -1,27 +1,26 @@
 from __future__ import print_function
 import keras
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Flatten
+from keras.layers import Dense, Dropout, Activation, GlobalAveragePooling2D
 from keras.layers import Conv2D, MaxPooling2D
+from keras.callbacks import CSVLogger
 import numpy as np
 import os
 from keras import metrics
 import gzip
-import pickle
-import random
 
-batch_size = 50
+batch_size = 5
 num_classes = 1
-epochs = 3
+epochs = 25
 data_augmentation = True
 num_predictions = 20
 save_dir = os.path.join(os.getcwd(), 'saved_models')
 model_name = 'shoe_classifier.h5'
 
 # The data, shuffled and split between train and test sets:
-x_train = pickle.load(gzip.open("pickle/train_x.pkl.gz"))
+x_train = np.load(gzip.open("pickle/train_x.npy.gz"))
 print("done reading images")
-y_train = pickle.load(gzip.open("pickle/train_y.pkl.gz"))
+y_train = np.load(gzip.open("pickle/train_y.npy.gz"))
 print("done indexing outputs")
 print(str(len(x_train)) + " training samples")
 
@@ -29,52 +28,35 @@ x_test = np.load(gzip.open("pickle/test_x.npy.gz"))
 y_test = np.load(gzip.open("pickle/test_y.npy.gz"))
 
 model = Sequential()
-
 model.add(Conv2D(32, (3, 3), padding='same',
-                 input_shape=np.array(x_train).shape[1:], activation='relu'))
-model.add(Conv2D(32, (3, 3), activation='relu'))
+                 input_shape=x_train.shape[1:]))
+model.add(Activation('relu'))
+model.add(Conv2D(32, (3, 3)))
+model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 model.add(Dropout(0.25))
 
-model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
-model.add(Conv2D(64, (3, 3), activation='relu'))
+model.add(Conv2D(64, (3, 3), padding='same'))
+model.add(Activation('relu'))
+model.add(Conv2D(64, (3, 3)))
+model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 model.add(Dropout(0.25))
 
-model.add(Flatten())
-model.add(Dense(512, activation='sigmoid'))
+model.add(GlobalAveragePooling2D())
+model.add(Dense(512))
+model.add(Activation('relu'))
 model.add(Dropout(0.5))
-model.add(Dense(num_classes, activation='softmax'))
-
-"""
-i = keras.Input(x_train.shape)
-v = keras.applications.VGG16(include_top=False)
-v.trainable=False
-o = v(i)
-o = Dense(1, activation="sigmoid")(o)
-model = keras.models.Model(inputs=[i], outputs=[o])
-"""
+model.add(Dense(num_classes))
+model.add(Activation('sigmoid'))
 opt = keras.optimizers.SGD(lr=0.001, decay=1e-6)
 
 model.compile(loss='binary_crossentropy',
               optimizer=opt,
               metrics=['accuracy', metrics.binary_accuracy])
 
-def batch_generator(x, y, batch_size=64):
-    while(True):
-        inputs = []
-        targets = []
-        for i in range(len(x)):
-            inputs.append(x[i])
-            targets.append(y[i])
-            if i%batch_size == 0 or i == len(x) - 1:
-                batch_x = np.array([a for a in inputs])
-                yield (batch_x, np.array([b for b in targets]))
-                inputs = []
-                targets = []
 
-model.fit_generator(batch_generator(x_train, y_train), steps_per_epoch=10, validation_data=(x_test, y_test), epochs=epochs)
-
+model.fit(x_train,y_train, batch_size=batch_size, epochs=epochs, callbacks=[CSVLogger("data.csv", append=True)] ,shuffle=True, validation_data=(x_test, y_test))
 
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
@@ -83,8 +65,5 @@ model.save(model_path)
 
 print('Saved trained model at %s ' % model_path)
 
-# Score trained model.
-scores = model.evaluate(x_test, y_test, verbose=1)
-print('Test loss:', scores[0])
-print('Test accuracyh:', scores[1])
+
 
